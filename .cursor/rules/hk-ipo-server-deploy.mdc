@@ -9,7 +9,8 @@ alwaysApply: true
 - **公网 IP**: `150.158.75.100`（勿与 `50.158.x.x` 混淆）
 - **访问**: `https://lovefromsun.cloud/hk-ipo/`（**末尾必须带 /**）；IP: `http://150.158.75.100/hk-ipo/`
 - **服务器目录**: 源码 `/var/www/hk-ipo-src`，静态 `/var/www/hk-ipo-app`，Nginx 片段 ` /etc/nginx/snippets/hk-ipo-static.conf`
-- **API**: Node ≥ 22.5，监听 `127.0.0.1:3001`；Nginx 将 `/api/hk-ipo/` 反代到 `http://127.0.0.1:3001/api/`；PM2 进程名通常为 `hk-ipo-api`
+- **API**: **Node ≥ 22.5**（`node:sqlite` 所需；曾用 Node 20 会报 `ERR_UNKNOWN_BUILTIN_MODULE`）。监听 `127.0.0.1:3001`；Nginx 将 `/api/hk-ipo/` 反代到 `http://127.0.0.1:3001/api/`；PM2 进程名通常为 `hk-ipo-api`
+- **若本地 force-push 后服务器 `git pull` 报错**：在 `/var/www/hk-ipo-src` 执行 `git fetch origin && git reset --hard origin/main` 再构建（会丢弃服务器上仅存在于旧历史的本地提交）
 - **例行发布**（登录服务器后，细节见 `deploy/README.md`）:
 
 ```bash
