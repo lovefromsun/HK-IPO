@@ -11,10 +11,14 @@ MODE="${1:-root}"
 REPO_DIR="${REPO_DIR:-$HOME/HK-IPO}"
 WEB_ROOT="${WEB_ROOT:-/var/www/hk-ipo}"
 
+export VITE_API_BASE_URL="${VITE_API_BASE_URL:-/api/hk-ipo}"
+
 if [[ "$MODE" == "subpath" ]]; then
   export VITE_BASE_PATH="${VITE_BASE_PATH:-/hk-ipo/}"
-  export VITE_API_BASE_URL="${VITE_API_BASE_URL:-/api/hk-ipo}"
   echo "构建 base: $VITE_BASE_PATH API: $VITE_API_BASE_URL（需 Nginx 反代 API，见 deploy/README.md）"
+else
+  unset VITE_BASE_PATH
+  echo "构建根路径 / API: $VITE_API_BASE_URL"
 fi
 
 if [[ ! -d "$REPO_DIR/.git" ]]; then
@@ -27,17 +31,15 @@ git pull
 
 if command -v npm >/dev/null 2>&1; then
   npm ci
-  if [[ "$MODE" == "subpath" ]]; then
-    npm run build
-  else
-    unset VITE_BASE_PATH
-    npm run build
-  fi
+  (cd server && npm ci)
+  npm run build
 else
-  echo "未找到 npm，请先安装 Node.js LTS（建议 20+）"
+  echo "未找到 npm，请先安装 Node.js（本项目的 API 需要 >= 22.5）"
   exit 1
 fi
 
 sudo mkdir -p "$WEB_ROOT"
 sudo rsync -a --delete dist/ "$WEB_ROOT/"
-echo "已发布到 $WEB_ROOT ，请 nginx -t && sudo systemctl reload nginx"
+echo "已发布到 $WEB_ROOT"
+echo "若 API 已用 PM2 管理：pm2 restart hk-ipo-api"
+echo "然后：sudo nginx -t && sudo systemctl reload nginx"

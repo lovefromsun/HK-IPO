@@ -1,0 +1,24 @@
+---
+description: HK-IPO 生产部署 SSH、路径与发布命令（lovefromsun 腾讯云，无变更即用此记录）
+alwaysApply: true
+---
+
+# HK-IPO 服务器部署（永久记录）
+
+- **SSH（Windows）**: `ssh -i C:\Users\cx\.ssh\MYY.pem ubuntu@150.158.75.100`
+- **公网 IP**: `150.158.75.100`（勿与 `50.158.x.x` 混淆）
+- **访问**: `https://lovefromsun.cloud/hk-ipo/`（**末尾必须带 /**）；IP: `http://150.158.75.100/hk-ipo/`
+- **服务器目录**: 源码 `/var/www/hk-ipo-src`，静态 `/var/www/hk-ipo-app`，Nginx 片段 ` /etc/nginx/snippets/hk-ipo-static.conf`
+- **API**: Node ≥ 22.5，监听 `127.0.0.1:3001`；Nginx 将 `/api/hk-ipo/` 反代到 `http://127.0.0.1:3001/api/`；PM2 进程名通常为 `hk-ipo-api`
+- **例行发布**（登录服务器后，细节见 `deploy/README.md`）:
+
+```bash
+cd /var/www/hk-ipo-src && git pull && npm ci && (cd server && npm ci) \
+  && VITE_BASE_PATH=/hk-ipo/ VITE_API_BASE_URL=/api/hk-ipo npm run build \
+  && sudo rsync -a --delete dist/ /var/www/hk-ipo-app/ \
+  && sudo chown -R www-data:www-data /var/www/hk-ipo-app \
+  && pm2 restart hk-ipo-api \
+  && sudo nginx -t && sudo systemctl reload nginx
+```
+
+- 数据：SQLite（`SQLITE_PATH`，见 `deploy/pm2-hk-ipo-api.example.cjs`）；**勿**把 `server/data/` 或生产库提交 Git。
